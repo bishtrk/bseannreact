@@ -37,10 +37,10 @@ const columns = [
     width: 300,
     renderCell: (params: any) => (
       <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-        <Typography variant="body2" sx={{ fontWeight: params.row.CRITICALNEWS === '1' ? 'bold' : 'normal' }}>
+        <Typography variant="body2" sx={{ fontWeight: (params.row.CRITICALNEWS === 1 || params.row.CRITICALNEWS === '1') ? 'bold' : 'normal' }}>
           {params.value || params.row.NEWSSUB}
         </Typography>
-        {params.row.CRITICALNEWS === '1' && (
+        {(params.row.CRITICALNEWS === 1 || params.row.CRITICALNEWS === '1') && (
           <Typography variant="caption" color="error">Critical</Typography>
         )}
       </Box>
@@ -86,13 +86,19 @@ const AnnouncementsTable: React.FC<Props> = ({ announcements, rowCount, loading 
       <Typography variant="h6" sx={{ mb: 2 }}>
         Results ({rowCount})
       </Typography>
-      {'DataGrid' in React && (
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-        />
-      )}
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        loading={loading}
+        pageSizeOptions={[10, 25, 50]}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 10,
+            },
+          },
+        }}
+      />
     </Box>
   );
 };
