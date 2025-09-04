@@ -1,6 +1,6 @@
 import React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, Typography, Link } from '@mui/material';
+import { Box, Typography, Link, Button } from '@mui/material';
 import type { Announcement } from '../services/bseApi';
 import { buildPdfUrl } from '../services/bseApi';
 import { format } from 'date-fns';
@@ -86,6 +86,42 @@ const columns = [
             </Typography>
           )}
         </Box>
+      );
+    },
+  },
+  {
+    field: 'DOWNLOAD',
+    headerName: 'Download PDF',
+    width: 100,
+    renderCell: (params: any) => {
+      const attachment = params.value?.ATTACHMENTNAME || '';
+      if (!attachment || attachment.trim() === '') return 'N/A';
+      const pdfUrl = `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${attachment}`;
+      return (
+        <Box>
+          <Button
+            onClick={() => window.open(pdfUrl, '_blank')}
+            size="small"
+            variant="outlined"
+          >
+            Download
+          </Button>
+        </Box>
+      );
+    },
+  },
+  {
+    field: 'PDF_URL',
+    headerName: 'PDF Link',
+    width: 300,
+    renderCell: (params: any) => {
+      const attachment = params.value?.ATTACHMENTNAME || '';
+      if (!attachment || attachment.trim() === '') return 'N/A';
+      const pdfUrl = `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${attachment}`;
+      return (
+        <Link href={pdfUrl} target="_blank" rel="noopener" sx={{ wordBreak: 'break-all' }}>
+          {pdfUrl}
+        </Link>
       );
     },
   },

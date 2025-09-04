@@ -7,6 +7,7 @@ import {
   Select,
   MenuItem,
   Box,
+  Autocomplete,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -28,15 +29,64 @@ interface Props {
   loading: boolean;
 }
 
+interface CompanyOption {
+  label: string;
+  value: string;
+}
+
 const FilterForm: React.FC<Props> = ({ onSubmit, loading }) => {
+  const [company, setCompany] = React.useState<CompanyOption | null>(null);
   const [scrip, setScrip] = React.useState('543985');
   const [category, setCategory] = React.useState('Company Update');
-  const [fromDate, setFromDate] = React.useState<Date>(new Date(2025, 7, 1)); // August
-  const [toDate, setToDate] = React.useState<Date>(new Date(2025, 8, 1)); // September
+  const [fromDate, setFromDate] = React.useState<Date>(new Date()); // Today
+  const [toDate, setToDate] = React.useState<Date>(new Date()); // Today
   const [strSearch, setStrSearch] = React.useState<'P' | 'S' | 'All'>('P');
   const [strType, setStrType] = React.useState('C');
   const [subcategory, setSubcategory] = React.useState('-1');
   const [pageno, setPageno] = React.useState(1);
+  const [companyList, setCompanyList] = React.useState<CompanyOption[]>([]);
+
+  React.useEffect(() => {
+    fetch('/src/data/company_list.csv')
+      .then(response => response.text())
+      .then(csvText => {
+        const lines = csvText.split('\n');
+        const companies: CompanyOption[] = [];
+
+        // Skip header row and parse CSV
+        lines.slice(1).forEach(line => {
+          const parts = line.split(',');
+          if (parts.length >= 2) {
+            const scripCode = parts[0].trim();
+            const companyName = parts.slice(1).join(',').trim().replace(/"/g, '');
+            if (scripCode && companyName) {
+              companies.push({
+                label: companyName,
+                value: scripCode
+              });
+            }
+          }
+        });
+
+        setCompanyList(companies);
+
+        // Set default company to first one if available
+        if (companies.length > 0) {
+          const defaultCompany = companies.find(c => c.value === '543985') || companies[0];
+          setCompany(defaultCompany);
+          setScrip(defaultCompany.value);
+        }
+      })
+      .catch(error => {
+        console.error('Error loading company list:', error);
+        // Fallback to manual input if CSV fails to load
+      });
+  }, []);
+
+  const handleCompanyChange = (event: any, newValue: CompanyOption | null) => {
+    setCompany(newValue);
+    setScrip(newValue?.value || '');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,11 +105,24 @@ const FilterForm: React.FC<Props> = ({ onSubmit, loading }) => {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}>
+        <Autocomplete
+          options={companyList}
+          value={company}
+          onChange={handleCompanyChange}
+          renderInput={(params) => (
+            <TextField {...params} label="Select Company" variant="outlined" />
+          )}
+          getOptionLabel={(option) => option.label}
+          isOptionEqualToValue={(option, value) => option.value === value.value}
+          sx={{ minWidth: 300 }}
+        />
         <TextField
-          label="Scrip code"
+          label="Scrip Code (Selected)"
           value={scrip}
-          onChange={(e) => setScrip(e.target.value)}
           variant="outlined"
+          InputProps={{
+            readOnly: true,
+          }}
         />
         <TextField
           label="Category (strCat)"
